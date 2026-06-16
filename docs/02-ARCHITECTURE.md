@@ -2,32 +2,62 @@
 
 ## System Overview
 
-Retail Scan & Go is a retail self-checkout platform.
+Retail Scan & Go is a retail self-checkout platform that enables customers to:
 
-The platform consists of:
+1. Enter a store
+2. Select the store in the app
+3. Scan products
+4. Add products to cart
+5. Make payment
+6. Receive secure QR
+7. Exit without standing in billing queues
 
-1. Customer Mobile App
-2. Admin Dashboard
-3. Guard App
-4. Backend API
-5. PostgreSQL Database
+The system consists of:
+
+* Customer Mobile Application
+* Admin Dashboard
+* Security Guard Application
+* Backend API
+* PostgreSQL Database
 
 ---
 
-# Core Modules
+# High Level Architecture
+
+Customer App
+↓
+Backend API
+↓
+PostgreSQL
+
+Admin Dashboard
+↓
+Backend API
+↓
+PostgreSQL
+
+Guard App
+↓
+Backend API
+↓
+PostgreSQL
+
+---
+
+# Backend Modules
 
 ## Auth Module
 
 Purpose:
 
-Authentication and Authorization.
+Authentication and authorization.
 
 Responsibilities:
 
 * Login
-* JWT Generation
-* JWT Validation
-* Role Validation
+* JWT generation
+* JWT validation
+* Role management
 
 Roles:
 
@@ -37,7 +67,7 @@ Roles:
 
 Dependencies:
 
-* users
+* Users Module
 
 ---
 
@@ -45,18 +75,18 @@ Dependencies:
 
 Purpose:
 
-Manage system users.
+Manage users.
 
 Responsibilities:
 
 * Create User
 * Update User
-* View User
+* Get User
 * User Profile
 
 Dependencies:
 
-None
+* Auth Module
 
 ---
 
@@ -71,7 +101,8 @@ Responsibilities:
 * Create Store
 * Update Store
 * Delete Store
-* View Store
+* Get Store
+* List Stores
 
 Dependencies:
 
@@ -90,12 +121,12 @@ Responsibilities:
 * Create Product
 * Update Product
 * Delete Product
-* Product Search
-* Barcode Lookup
+* Search Product
+* Get Product By Barcode
 
 Dependencies:
 
-* stores
+* Stores Module
 
 ---
 
@@ -107,14 +138,14 @@ Manage stock.
 
 Responsibilities:
 
-* Add Stock
-* Update Stock
-* Reduce Stock
-* Stock Validation
+* Add Inventory
+* Reduce Inventory
+* Update Inventory
+* Validate Inventory
 
 Dependencies:
 
-* products
+* Products Module
 
 ---
 
@@ -122,18 +153,19 @@ Dependencies:
 
 Purpose:
 
-Manage customer shopping carts.
+Customer shopping cart.
 
 Responsibilities:
 
-* Add To Cart
-* Remove From Cart
+* Add Product
+* Remove Product
 * Update Quantity
+* View Cart
 * Clear Cart
 
 Dependencies:
 
-* products
+* Products Module
 
 ---
 
@@ -141,19 +173,19 @@ Dependencies:
 
 Purpose:
 
-Manage purchases.
+Order creation.
 
 Responsibilities:
 
 * Create Order
-* View Order
 * Order History
+* Order Details
+* Order Status
 
 Dependencies:
 
-* cart
-* products
-* inventory
+* Cart Module
+* Inventory Module
 
 ---
 
@@ -161,17 +193,18 @@ Dependencies:
 
 Purpose:
 
-Manage payment processing.
+Process payments.
 
 Responsibilities:
 
-* Create Transaction
+* Initiate Payment
 * Verify Payment
 * Update Payment Status
+* Create Transaction Record
 
 Dependencies:
 
-* orders
+* Orders Module
 
 ---
 
@@ -183,14 +216,15 @@ Generate secure exit QR.
 
 Responsibilities:
 
+* Generate Token
+* Encrypt Token
 * Generate QR
 * Validate QR
-* Mark QR As Used
+* Mark Used
 
 Dependencies:
 
-* orders
-* payments
+* Payments Module
 
 ---
 
@@ -198,123 +232,160 @@ Dependencies:
 
 Purpose:
 
-Verify customer exit.
+Exit verification.
 
 Responsibilities:
 
 * Scan QR
-* Validate Exit
+* Validate QR
 * Approve Exit
+* Mark QR Used
 
 Dependencies:
 
-* qr
-
----
-
-## Dashboard Module
-
-Purpose:
-
-Provide store management interface.
-
-Responsibilities:
-
-* Product Management
-* Inventory Management
-* Order Management
-* Analytics
-
-Dependencies:
-
-All Business Modules
-
----
-
-# System Flow
-
-Customer
-
-→ Select Store
-
-→ Scan Product
-
-→ Add To Cart
-
-→ Checkout
-
-→ Payment
-
-→ QR Generated
-
-→ Guard Verification
-
-→ Exit
-
----
-
-# Backend Architecture
-
-Controller
-
-↓
-
-Service
-
-↓
-
-Repository
-
-↓
-
-Database
-
----
-
-# Mobile App Architecture
-
-Screens
-
-↓
-
-Redux
-
-↓
-
-API Layer
-
-↓
-
-Backend
+* QR Module
 
 ---
 
 # Dashboard Architecture
 
-Pages
+Pages:
 
-↓
+* Login
+* Dashboard
+* Products
+* Inventory
+* Orders
+* Transactions
+* Guards
+* Settings
 
-Redux
+Dependencies:
 
-↓
-
-API Layer
-
-↓
-
-Backend
+Backend API
 
 ---
 
-# Future Extensions
+# Customer Mobile App Architecture
 
-Reserved Modules:
+Screens:
 
-* RFID
-* Analytics
-* AI Recommendations
-* Loyalty Program
-* Anti Theft
+* Splash
+* Login
+* OTP Verification
+* Store Selection
+* Home
+* Product Scan
+* Cart
+* Checkout
+* Order History
+* Profile
 
-These modules must remain isolated from existing modules.
+Dependencies:
+
+Backend API
+
+---
+
+# Guard Mobile App Architecture
+
+Screens:
+
+* Login
+* Scan QR
+* Verification Result
+* Approve Exit
+
+Dependencies:
+
+Backend API
+
+---
+
+# Order Flow
+
+Customer
+↓
+Scan Products
+↓
+Cart
+↓
+Checkout
+↓
+Create Order
+↓
+Payment
+↓
+Payment Verification
+↓
+Generate QR
+↓
+Exit Verification
+
+---
+
+# Inventory Flow
+
+Product Created
+↓
+Inventory Added
+↓
+Customer Purchase
+↓
+Inventory Reduced
+
+---
+
+# Security Flow
+
+Payment Success
+↓
+Generate Secure Token
+↓
+Generate QR
+↓
+Guard Scans QR
+↓
+Validate Token
+↓
+Validate Payment
+↓
+Mark Token Used
+↓
+Allow Exit
+
+---
+
+# Realtime Events
+
+Socket.IO Events:
+
+inventory_updated
+
+order_created
+
+payment_success
+
+qr_verified
+
+These events are used for:
+
+* Dashboard updates
+* Inventory synchronization
+* Order notifications
+
+---
+
+# Future Expansion Rules
+
+Future features must be added as independent modules.
+
+Future modules must not modify:
+
+* Auth Module
+* Payments Module
+* Orders Module
+
+Future modules should communicate through services or events.
+
+Architecture must remain modular and scalable.
